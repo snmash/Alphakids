@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AlphaKids</title>
+    <style>
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to bottom right, #fbc2eb, #a6c1ee);
+            overflow: hidden;
+        }
+        h1 {
+            font-size: 3em;
+            color: #ff6f61;
+            margin-top: 20px;
+        }
+        #game-container {
+            background-color: rgba(255, 255, 255, 0.8);
+            margin: 20px auto;
+            padding: 20px;
+            border-radius: 15px;
+            width: 80%;
+            max-width: 600px;
+        }
+        #letter-display {
+            font-size: 10em;
+            color: #4a90e2;
+            margin-bottom: 20px;
+        }
+        #answer {
+            font-size: 2em;
+            padding: 10px;
+            width: 100px;
+            border-radius: 10px;
+            border: 2px solid #4a90e2;
+            text-align: center;
+        }
+        #feedback {
+            margin-top: 20px;
+            min-height: 30px;
+            font-size: 1.5em;
+            color: #ff6f61;
+        }
+        #celebration {
+            margin-top: 20px;
+            font-size: 1.5em;
+            color: #8b572a;
+        }
+        #score {
+            margin-top: 30px;
+            font-size: 1.2em;
+        }
+        #fireworks {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>AlphaKids</h1>
+    <div id="game-container">
+        <div id="letter-display"></div>
+        <input type="text" id="answer" maxlength="1" autofocus>
+        <div id="feedback"></div>
+        <div id="celebration"></div>
+        <div id="score">
+            <p>Total Correct: <span id="total-correct">0</span></p>
+            <p>Consecutive Correct: <span id="consecutive-correct">0</span></p>
+        </div>
+    </div>
+    <canvas id="fireworks" class="hidden"></canvas>
+
+    <script>
+        const letters = 'abcdefghijklmnopqrstuvwxyz'.split('');
+        let currentLetter = '';
+        let totalCorrect = 0;
+        let consecutiveCorrect = 0;
+        let letterInterval; // For repeating the letter
+        let feedbackTimeout; // For controlling the feedback message
+
+        const letterDisplayElement = document.getElementById('letter-display');
+        const answerInput = document.getElementById('answer');
+        const feedbackElement = document.getElementById('feedback');
+        const celebrationElement = document.getElementById('celebration');
+        const totalCorrectElement = document.getElementById('total-correct');
+        const consecutiveCorrectElement = document.getElementById('consecutive-correct');
+        const fireworksCanvas = document.getElementById('fireworks');
+        const ctx = fireworksCanvas.getContext('2d');
+
+        fireworksCanvas.width = window.innerWidth;
+        fireworksCanvas.height = window.innerHeight;
+
+        function generateLetter() {
+            currentLetter = letters[Math.floor(Math.random() * letters.length)];
+            displayLetter(currentLetter);
+            speakLetter(currentLetter);
+            startRepeatingLetter();
+            feedbackElement.textContent = '';
+            answerInput.value = '';
+            answerInput.focus();
+        }
+
+        function displayLetter(letter) {
+            letterDisplayElement.textContent = letter.toUpperCase() + letter.toLowerCase();
+        }
+
+        function speakLetter(letter) {
+            const utterance = new SpeechSynthesisUtterance();
+            utterance.text = letter.toUpperCase();
+            utterance.lang = 'en-US';
+            utterance.pitch = 1.0;
+            utterance.rate = 0.25;  // Adjusted for slower speech
+            speechSynthesis.speak(utterance);
+        }
+
+        function startRepeatingLetter() {
+            // Clear any existing intervals to prevent multiple intervals running
+            clearInterval(letterInterval);
+            letterInterval = setInterval(() => {
+                speakLetter(currentLetter);
+            }, 10000); // 10000 milliseconds = 10 seconds
+        }
+
+        function stopRepeatingLetter() {
+            clearInterval(letterInterval);
+        }
+
+        function speakFeedback(message) {
+            const utterance = new SpeechSynthesisUtterance();
+            utterance.text = message;
+            utterance.lang = 'en-US';
+            utterance.pitch = 1.0;
+            utterance.rate = 0.25;  // Adjusted for slower speech
+            speechSynthesis.speak(utterance);
+        }
+
+        answerInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                checkAnswer();
+            }
+        });
+
+        function checkAnswer() {
+            const userAnswer = answerInput.value.toLowerCase();
+            // Clear any existing feedback timeout
+            clearTimeout(feedbackTimeout);
+
+            if (userAnswer === currentLetter) {
+                feedbackElement.textContent = 'Good job!';
+                speakFeedback('Good job!');
+                totalCorrect++;
+                consecutiveCorrect++;
+                updateScore();
+                showCelebration(); // Show fireworks every time
+                stopRepeatingLetter();
+                generateLetter();
+            } else {
+                feedbackElement.textContent = 'Uh oh, try again!';
+                speakFeedback('Uh oh, try again!');
+                consecutiveCorrect = 0;
+                updateScore();
+                answerInput.value = '';
+                answerInput.focus();
+
+                // Set a timeout to clear the feedback message after a few seconds
+                feedbackTimeout = setTimeout(() => {
+                    feedbackElement.textContent = '';
+                }, 3000); // Clears the message after 3 seconds
+            }
+        }
+
+        function updateScore() {
+            totalCorrectElement.textContent = totalCorrect;
+            consecutiveCorrectElement.textContent = consecutiveCorrect;
+        }
+
+        function showCelebration() {
+            celebrationElement.textContent = `Awesome! Keep it up!`;
+            launchFireworks();
+            // Clear the celebration message after a few seconds
+            setTimeout(() => {
+                celebrationElement.textContent = '';
+            }, 5000);
+        }
+
+        function launchFireworks() {
+            fireworksCanvas.classList.remove('hidden');
+            const particles = [];
+            const particleCount = 200; // Increased particle count for more fireworks
+
+            for (let i = 0; i < particleCount; i++) {
+                particles.push({
+                    x: fireworksCanvas.width / 2,
+                    y: fireworksCanvas.height / 2,
+                    speedX: (Math.random() - 0.5) * 5, // 2x slower
+                    speedY: (Math.random() - 0.5) * 5, // 2x slower
+                    color: `hsla(${Math.random() * 360}, 100%, 50%, ${Math.random()})`, // More colorful with varying opacity
+                    size: (Math.random() * 5 + 2) * 2, // 2x bigger
+                    life: (100 + Math.random() * 100) * 2 // 2x longer life
+                });
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, fireworksCanvas.width, fireworksCanvas.height);
+                particles.forEach((p, index) => {
+                    p.x += p.speedX;
+                    p.y += p.speedY;
+                    p.speedY += 0.025; // Gravity effect adjusted for slower animation
+                    p.life--;
+                    ctx.globalCompositeOperation = 'lighter';
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                    if (p.life <= 0) {
+                        particles.splice(index, 1);
+                    }
+                });
+                if (particles.length > 0) {
+                    requestAnimationFrame(animate);
+                } else {
+                    ctx.clearRect(0, 0, fireworksCanvas.width, fireworksCanvas.height);
+                    fireworksCanvas.classList.add('hidden');
+                }
+            }
+            animate();
+        }
+
+        // Call generateLetter() after ensuring the page has loaded
+        window.onload = generateLetter;
+    </script>
+
+</body>
+</html>
