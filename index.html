@@ -3,13 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>AlphaKids</title>
-    <!-- Google Fonts for mobile-friendly fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Using web-safe fonts for better compatibility -->
     <style>
         body {
-            font-family: 'Open Sans', sans-serif;
+            font-family: Arial, Helvetica, sans-serif;
             text-align: center;
             margin: 0;
             padding: 0;
@@ -35,6 +32,7 @@
             color: #4a90e2;
             margin-bottom: 20px;
             word-wrap: break-word;
+            font-family: Arial, Helvetica, sans-serif; /* Ensure consistent font */
         }
         #answer {
             font-size: 2em;
@@ -125,6 +123,35 @@
         fireworksCanvas.width = window.innerWidth;
         fireworksCanvas.height = window.innerHeight;
 
+        const letterPronunciations = {
+            a: 'ay',
+            b: 'bee',
+            c: 'see',
+            d: 'dee',
+            e: 'ee',
+            f: 'eff',
+            g: 'jee',
+            h: 'aitch',
+            i: 'eye',
+            j: 'jay',
+            k: 'kay',
+            l: 'el',
+            m: 'em',
+            n: 'en',
+            o: 'oh',
+            p: 'pee',
+            q: 'cue',
+            r: 'ar',
+            s: 'ess',
+            t: 'tee',
+            u: 'you',
+            v: 'vee',
+            w: 'double you',
+            x: 'ex',
+            y: 'why',
+            z: 'zee'
+        };
+
         function generateLetter() {
             currentLetter = letters[Math.floor(Math.random() * letters.length)];
             uhOhSaid = false; // Reset the flag for new letter
@@ -142,10 +169,11 @@
 
         function speakLetter(letter) {
             const utterance = new SpeechSynthesisUtterance();
-            utterance.text = `Can you find the letter ${letter.toUpperCase()}?`;
+            const letterPronunciation = letterPronunciations[letter.toLowerCase()];
+            utterance.text = `Can you find the letter ${letterPronunciation}?`;
             utterance.lang = 'en-US';
             utterance.pitch = 1.0;
-            utterance.rate = 1.0;  // Sped up by 1.5x from previous slower rate
+            utterance.rate = 1.0; // Sped up by 1.5x from previous slower rate
             speechSynthesis.speak(utterance);
         }
 
@@ -166,7 +194,7 @@
             utterance.text = message;
             utterance.lang = 'en-US';
             utterance.pitch = 1.0;
-            utterance.rate = 1.0;  // Sped up by 1.5x from previous slower rate
+            utterance.rate = 1.0; // Sped up by 1.5x from previous slower rate
             speechSynthesis.speak(utterance);
         }
 
